@@ -128,7 +128,7 @@ UPDATE_VERSION() {
 
 
 #删除官方的默认插件
-rm -rf ../feeds/luci/applications/luci-app-{passwall*,mosdns,dockerman,dae*,bypass*}
+rm -rf ../feeds/luci/applications/luci-app-{passwall*,mosdns,dae*,bypass*}
 rm -rf ../feeds/packages/net/{v2ray-geodata,dae*}
 cp -r $GITHUB_WORKSPACE/package/* ./
 #修复daed/Makefile
