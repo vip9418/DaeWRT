@@ -97,14 +97,22 @@ UPDATE_PACKAGE "luci-app-lucky" "sirpdboy/luci-app-lucky" "main"
 # ========== Docker 管理类 ==========
 
 UPDATE_PACKAGE "luci-lib-docker" "lisaac/luci-lib-docker" "master"
-find luci-lib-docker -name "Makefile" \
-    -exec sed -i 's/PKG_VERSION:=v\([0-9]\)/PKG_VERSION:=\1/g' {} +
-echo "已修复 luci-lib-docker 版本号格式"
+if [ -d "luci-lib-docker" ]; then
+    find luci-lib-docker -name "Makefile" \
+        -exec sed -i 's/PKG_VERSION:=v\([0-9]\)/PKG_VERSION:=\1/g' {} +
+    echo "✅ 已修复 luci-lib-docker 版本号格式"
+else
+    echo "❌ luci-lib-docker clone 失败，跳过版本号修复"
+fi
 
 UPDATE_PACKAGE "luci-app-dockerman" "lisaac/luci-app-dockerman" "master"
-find luci-app-dockerman -name "Makefile" \
-    -exec sed -i 's/PKG_VERSION:=v\([0-9]\)/PKG_VERSION:=\1/g' {} +
-echo "已修复 luci-app-dockerman 版本号格式"
+if [ -d "luci-app-dockerman" ]; then
+    find luci-app-dockerman -name "Makefile" \
+        -exec sed -i 's/PKG_VERSION:=v\([0-9]\)/PKG_VERSION:=\1/g' {} +
+    echo "✅ 已修复 luci-app-dockerman 版本号格式"
+else
+    echo "❌ luci-app-dockerman clone 失败，跳过版本号修复"
+fi
 
 # ========== 文件共享类（新增）==========
 # unishare：统一文件共享管理，整合多协议共享（替代单独 samba4 方案）
