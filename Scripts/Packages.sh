@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#安装和更新软件包
+# 安装和更新软件包
 UPDATE_PACKAGE() {
 	local PKG_NAME=$1
 	local PKG_REPO=$2
@@ -42,30 +42,39 @@ UPDATE_PACKAGE() {
 
 # 调用示例
 # UPDATE_PACKAGE "OpenAppFilter" "destan19/OpenAppFilter" "master" "" "custom_name1 custom_name2"
-# UPDATE_PACKAGE "open-app-filter" "destan19/OpenAppFilter" "master" "" "luci-app-appfilter oaf" 这样会把原有的open-app-filter，luci-app-appfilter，oaf相关组件删除，不会出现coremark错误。
+# UPDATE_PACKAGE "open-app-filter" "destan19/OpenAppFilter" "master" "" "luci-app-appfilter oaf"
 
-# UPDATE_PACKAGE "包名" "项目地址" "项目分支" "pkg/name，可选，pkg为从大杂烩中单独提取包名插件；name为重命名为包名"
+# ========== 主题类 ==========
 UPDATE_PACKAGE "argon" "sbwml/luci-theme-argon" "openwrt-25.12"
 UPDATE_PACKAGE "aurora" "eamonxg/luci-theme-aurora" "master"
 UPDATE_PACKAGE "aurora-config" "eamonxg/luci-app-aurora-config" "master"
 UPDATE_PACKAGE "kucat" "sirpdboy/luci-theme-kucat" "master"
 UPDATE_PACKAGE "kucat-config" "sirpdboy/luci-app-kucat-config" "master"
 
+# ========== 科学上网类 ==========
 UPDATE_PACKAGE "homeproxy" "VIKINGYFY/homeproxy" "main"
 UPDATE_PACKAGE "momo" "nikkinikki-org/OpenWrt-momo" "main"
 UPDATE_PACKAGE "nikki" "nikkinikki-org/OpenWrt-nikki" "main"
 #UPDATE_PACKAGE "openclash" "vernesong/OpenClash" "dev" "pkg"
+# 说明：不建议引入 OpenClash
+# 原因：当前使用 daed（eBPF 内核透明代理），天然兼容 fw4 和 Docker 网络
+# OpenClash 依赖 iptables，与 fw4(nftables) + Docker 网络存在规则链冲突风险
 #UPDATE_PACKAGE "passwall" "Openwrt-Passwall/openwrt-passwall" "main" "pkg"
 #UPDATE_PACKAGE "passwall2" "Openwrt-Passwall/openwrt-passwall2" "main" "pkg"
 
+# ========== 网络工具类 ==========
 #UPDATE_PACKAGE "luci-app-tailscale" "asvow/luci-app-tailscale" "main"
 
-#UPDATE_PACKAGE "athena-led" "unraveloop/JDC-AX6600-Athena-LED-Controller" "main"
-UPDATE_PACKAGE "ddns-go" "sirpdboy/luci-app-ddns-go" "main"
+# ddns-go 已禁用（Config =n），lucky 已内置 DDNS 功能
+#UPDATE_PACKAGE "ddns-go" "sirpdboy/luci-app-ddns-go" "main"
+
 UPDATE_PACKAGE "diskman" "lisaac/luci-app-diskman" "master"
 UPDATE_PACKAGE "easytier" "EasyTier/luci-app-easytier" "main"
 UPDATE_PACKAGE "fancontrol" "rockjake/luci-app-fancontrol" "main"
-UPDATE_PACKAGE "gecoosac" "openwrt-fork/openwrt-gecoosac" "main"
+
+# gecoosac 已禁用（Config =n），不需要集客 AP 管理时可保持注释
+#UPDATE_PACKAGE "gecoosac" "openwrt-fork/openwrt-gecoosac" "main"
+
 UPDATE_PACKAGE "mosdns" "sbwml/luci-app-mosdns" "v5" "" "v2dat"
 #UPDATE_PACKAGE "netspeedtest" "sirpdboy/luci-app-netspeedtest" "master" "" "homebox speedtest"
 UPDATE_PACKAGE "openlist2" "sbwml/luci-app-openlist2" "main"
@@ -73,14 +82,31 @@ UPDATE_PACKAGE "partexp" "sirpdboy/luci-app-partexp" "main"
 UPDATE_PACKAGE "qbittorrent" "sbwml/luci-app-qbittorrent" "master" "" "qt6base qt6tools rblibtorrent"
 UPDATE_PACKAGE "qmodem" "FUjr/QModem" "main"
 UPDATE_PACKAGE "quickfile" "sbwml/luci-app-quickfile" "main"
+
+# viking 包含 wolplus/timewol，Config 中 wolplus=n，不会被编译进固件
+# 保留 clone 以便随时通过改配置启用
 UPDATE_PACKAGE "viking" "VIKINGYFY/packages" "main" "" "luci-app-timewol luci-app-wolplus"
+
 UPDATE_PACKAGE "vnt" "lmq8267/luci-app-vnt" "main"
 
-
+# ========== 核心插件类 ==========
 UPDATE_PACKAGE "luci-app-daed" "QiuSimons/luci-app-daed" "kix"
 UPDATE_PACKAGE "luci-app-pushbot" "zzsj0928/luci-app-pushbot" "master"
 UPDATE_PACKAGE "luci-app-lucky" "sirpdboy/luci-app-lucky" "main"
-#更新软件包版本
+
+# ========== Docker 管理类（新增）==========
+# 说明：
+#   1. luci-lib-docker 需独立 clone（不在 feeds 中）
+#   2. luci-app-dockerman 依赖 luci-lib-docker / luci-lib-jsonc / luci-lib-ip
+#   3. 对应 Config 中的完整 Docker 套件启用
+UPDATE_PACKAGE "luci-lib-docker" "lisaac/luci-lib-docker" "master"
+UPDATE_PACKAGE "luci-app-dockerman" "lisaac/luci-app-dockerman" "master"
+
+# ========== 文件共享类（新增）==========
+# unishare：统一文件共享管理，整合多协议共享（替代单独 samba4 方案）
+UPDATE_PACKAGE "luci-app-unishare" "linkease/luci-app-unishare" "main"
+
+# ========== 更新软件包版本 ==========
 UPDATE_VERSION() {
 	local PKG_NAME=$1
 	local PKG_MARK=${2:-false}
@@ -125,20 +151,15 @@ UPDATE_VERSION() {
 #UPDATE_VERSION "sing-box"
 #UPDATE_VERSION "tailscale"
 
-
-
-#删除官方的默认插件
+# ========== 删除 feeds 中的官方重复包 ==========
 rm -rf ../feeds/luci/applications/luci-app-{passwall*,mosdns,dae*,bypass*}
 rm -rf ../feeds/packages/net/{v2ray-geodata,dae*}
 cp -r $GITHUB_WORKSPACE/package/* ./
-#修复daed/Makefile
-#rm -rf luci-app-daed/daed/Makefile && cp -r $GITHUB_WORKSPACE/patches/daed/Makefile luci-app-daed/daed/
-sed -i 's/pnpm install ; \\/pnpm install --no-frozen-lockfile ; \\/g' luci-app-daed/daed/Makefile
-sed -i 's|github.com/daeuniverse/quic-go|github.com/olicesx/quic-go|g' luci-app-daed/daed/Makefile
 
+# ========== 修复 daed/Makefile ==========
+# 替换 pnpm 安装参数，避免冻结锁文件报错
+sed -i 's/pnpm install ; \\/pnpm install --no-frozen-lockfile ; \\/g' luci-app-daed/daed/Makefile
+# 替换 quic-go 依赖为兼容 fork
+sed -i 's|github.com/daeuniverse/quic-go|github.com/olicesx/quic-go|g' luci-app-daed/daed/Makefile
+# 修复 procd 启动参数顺序问题
 sed -i 's|/run/i\\  procd_set_param|/procd_set_param command/i \\\tprocd_set_param|g' luci-app-daed/luci-app-daed/root/etc/init.d/luci_daed
-#cat luci-app-daed/daed/Makefile
-#修复libubox报错
-#sed -i '/include $(INCLUDE_DIR)\/cmake.mk/a PKG_BUILD_FLAGS:=no-werror' ../package/libs/libubox/Makefile
-#sed -i 's|TARGET_CFLAGS += -I$(STAGING_DIR)/usr/include|& -Wno-error=format-nonliteral -Wno-format-nonliteral|' ../package/libs/libubox/Makefile
-#cat ../package/libs/libubox/Makefile
