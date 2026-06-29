@@ -46,6 +46,7 @@ on:
       WRT_ARCH:
         required: false
         type: string
+
 env:
   GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
   WRT_CONFIG: ${{inputs.WRT_CONFIG}}
@@ -68,13 +69,13 @@ jobs:
     name: ${{inputs.WRT_SOURCE}}
     runs-on: ubuntu-latest
     steps:
-      - name: Install BC
+      - name: 安装BC工具
         env:
           DEBIAN_FRONTEND: noninteractive
         run: |
           sudo -E apt -yqq install bc
 
-      - name: Free Disk Space
+      - name: 释放磁盘空间
         uses: endersonmenezes/free-disk-space@v2
         with:
           remove_android: true
@@ -87,9 +88,10 @@ jobs:
           remove_folders: "/usr/share/swift /usr/share/miniconda /usr/share/az* /usr/share/glade* /usr/local/share/chromium /usr/local/share/powershell"
           testing: false
 
-      - name: Checkout Projects
+      - name: 检出项目代码
         uses: actions/checkout@main
-      - name: Initialization Environment
+
+      - name: 初始化编译环境
         env:
           DEBIAN_FRONTEND: noninteractive
         run: |
@@ -104,6 +106,7 @@ jobs:
           sudo bash "$GITHUB_WORKSPACE/Scripts/init_build_environment.sh"
           sudo -E systemctl daemon-reload
           sudo -E timedatectl set-timezone "Asia/Shanghai"
+          # 检测Go语言是否已安装
           if command -v go >/dev/null 2>&1; then
             echo "GO_INSTALLED=true" >> "$GITHUB_ENV"
           else
@@ -114,14 +117,14 @@ jobs:
 #          sudo chown $USER:$USER /mnt/build_wrt
 #          sudo ln -s /mnt/build_wrt $GITHUB_WORKSPACE/wrt
 
-      - name: Setup Go
+      - name: 配置Go语言环境
         if: env.GO_INSTALLED != 'true'
         uses: actions/setup-go@v6
         with:
           go-version: '1.26'
       - run: go version
 
-      - name: Initialization Values
+      - name: 初始化编译参数
         run: |
           echo "WRT_DATE=$(TZ=UTC-8 date +"%y.%m.%d-%H.%M.%S")" >> $GITHUB_ENV
           echo "WRT_MARK=${GITHUB_REPOSITORY%%/*}" >> $GITHUB_ENV
@@ -131,22 +134,24 @@ jobs:
           echo "WRT_LIST=none" >> $GITHUB_ENV
 
           echo "WRT_CI=$WRT_CI" >> $GITHUB_ENV
+          # 若未指定架构，则从配置文件自动提取
           [[ -z $WRT_ARCH ]] && {
             export WRT_ARCH=$(sed -n 's/.*_DEVICE_\(.*\)_DEVICE_.*/\1/p' $GITHUB_WORKSPACE/Config/$WRT_CONFIG.txt | head -n 1)
             echo "WRT_ARCH=$WRT_ARCH" >> $GITHUB_ENV
           }
           echo "$WRT_REPO/$WRT_BRANCH" > "$GITHUB_WORKSPACE/repo_flag"
-      - name: Clone Code
+
+      - name: 克隆源码
         run: |
           git clone --depth=1 --single-branch --branch $WRT_BRANCH $WRT_REPO ./wrt/
 
           cd ./wrt/ && echo "WRT_HASH=$(git log -1 --pretty=format:'%h')" >> $GITHUB_ENV
 
-      - name: Check Scripts
+      - name: 检查脚本格式
         run: |
           find ./ -maxdepth 3 -type f -iregex ".*\(txt\|sh\)$" -exec dos2unix {} \; -exec chmod +x {} \;
 
-      - name: Cache Dependencies
+      - name: 缓存编译依赖
         uses: actions/cache@v4
         with:
           path: |
@@ -157,67 +162,65 @@ jobs:
             ${{ env.WRT_ARCH }}-${{ hashFiles('**/repo_flag') }}-
             ${{ env.WRT_ARCH }}-
 
-      - name: Refresh the cache
+      - name: 刷新缓存时间戳
         run: |
           if [ -d "./wrt/staging_dir" ]; then
             find "./wrt/staging_dir" -type d -name "stamp" -not -path "*target*" | while read -r dir; do
                 find "$dir" -type f -exec touch {} +
             done
-          fi            
+          fi
 
-
-
-      - name: Update Feeds
+      - name: 更新软件源
         run: |
           cd ./wrt/
 
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
-      - name: Custom Packages
+      - name: 自定义软件包
         run: |
           cd ./wrt/package/
 
           $GITHUB_WORKSPACE/Scripts/Packages.sh
           $GITHUB_WORKSPACE/Scripts/Handles.sh
 
-      - name: Custom Settings
+      - name: 自定义配置
         run: |
           . $GITHUB_WORKSPACE/Scripts/function.sh
           cd ./wrt/
-          
+
           generate_config && cat .config
-          
+
           $GITHUB_WORKSPACE/Scripts/Settings.sh
 
           make defconfig -j$(nproc) && make clean -j$(nproc)
 
-      - name: Download Packages
+      - name: 下载软件包
         if: env.WRT_TEST != 'true'
         run: |
           cd ./wrt/
 
           make download -j$(nproc)
 
-      - name: Compile Firmware
+      - name: 编译固件
         if: env.WRT_TEST != 'true'
         run: |
           cd ./wrt/
 
           make -j$(nproc) || make -j1 V=s
 
-      - name: Delete Old Cache
+      - name: 清理旧缓存
         run: |
-          # 获取缓存列表并删除
+          # 获取缓存列表并删除旧缓存
           gh cache list --key ${{ env.WRT_ARCH }}-${{ hashFiles('**/repo_flag') }}- --json key --jq '.[] | .key' | while read -r key; do
             gh cache delete "$key"
           done
-          # 输出缓存状态
-          echo "========cache status========"
-          echo "ccache: $(du -sh ./wrt/.ccache | cut -f 1)"
-          echo "staging: $(du -sh ./wrt/staging_dir | cut -f 1)"
+          # 输出当前缓存占用状态
+          echo "========缓存状态========"
+          echo "编译缓存: $(du -sh ./wrt/.ccache | cut -f 1)"
+          echo "暂存目录: $(du -sh ./wrt/staging_dir | cut -f 1)"
 
-      - name: Machine Information
+      - name: 输出机器信息
         run: |
           cd ./wrt/
 
@@ -229,7 +232,7 @@ jobs:
           du -h --max-depth=1
           echo "======================="
 
-      - name: Package Firmware
+      - name: 整理固件文件
         run: |
           cd ./wrt/ && mkdir ./upload/
 
@@ -239,8 +242,10 @@ jobs:
             echo "WRT_KVER=$(find ./bin/targets/ -type f -name "*.manifest" -exec grep -oP '^kernel - \K[\d\.]+' {} \;)" >> $GITHUB_ENV
             echo "WRT_LIST=$(find ./bin/targets/ -type f -name "*.manifest" -exec grep -oP '^luci-(app|theme)[^ ]*' {} \; | tr '\n' ' ')" >> $GITHUB_ENV
 
+            # 清理不需要上传的冗余文件
             find ./bin/targets/ -iregex ".*\(buildinfo\|json\|sha256sums\|packages\)$" -exec rm -rf {} +
 
+            # 按目标平台重命名固件文件
             for FILE in $(find ./bin/targets/ -type f -iname "*$WRT_TARGET*") ; do
               EXT=$(basename $FILE | cut -d '.' -f 2-)
               NAME=$(basename $FILE | cut -d '.' -f 1 | grep -io "\($WRT_TARGET\).*")
@@ -253,7 +258,7 @@ jobs:
             make clean -j$(nproc)
           fi
 
-      - name: Release Firmware
+      - name: 发布固件
         uses: softprops/action-gh-release@master
         with:
           tag_name: ${{env.CI_NAME}}-${{env.WRT_CONFIG}}_${{env.WRT_DATE}}
