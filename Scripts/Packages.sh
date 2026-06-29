@@ -94,20 +94,17 @@ UPDATE_PACKAGE "luci-app-daed" "QiuSimons/luci-app-daed" "kix"
 UPDATE_PACKAGE "luci-app-pushbot" "zzsj0928/luci-app-pushbot" "master"
 UPDATE_PACKAGE "luci-app-lucky" "sirpdboy/luci-app-lucky" "main"
 
-# ========== Docker 管理类（新增）==========
-# 说明：
-#   1. luci-lib-docker 需独立 clone（不在 feeds 中）
-#   2. luci-app-dockerman 依赖 luci-lib-docker / luci-lib-jsonc / luci-lib-ip
-#   3. 对应 Config 中的完整 Docker 套件启用
-UPDATE_PACKAGE "luci-lib-docker" "lisaac/luci-lib-docker" "master"
 # ========== Docker 管理类 ==========
-# luci-lib-docker 需独立 clone（不在 feeds 中）
+
 UPDATE_PACKAGE "luci-lib-docker" "lisaac/luci-lib-docker" "master"
-# ↓ 修复版本号：去除 PKG_VERSION 中的 v 前缀（OpenWrt 要求版本号以数字开头）
-sed -i 's/PKG_VERSION:=v\([0-9]\)/PKG_VERSION:=\1/g' \
-    luci-lib-docker/collections/luci-lib-docker/Makefile
+find luci-lib-docker -name "Makefile" \
+    -exec sed -i 's/PKG_VERSION:=v\([0-9]\)/PKG_VERSION:=\1/g' {} +
 echo "已修复 luci-lib-docker 版本号格式"
+
 UPDATE_PACKAGE "luci-app-dockerman" "lisaac/luci-app-dockerman" "master"
+find luci-app-dockerman -name "Makefile" \
+    -exec sed -i 's/PKG_VERSION:=v\([0-9]\)/PKG_VERSION:=\1/g' {} +
+echo "已修复 luci-app-dockerman 版本号格式"
 
 # ========== 文件共享类（新增）==========
 # unishare：统一文件共享管理，整合多协议共享（替代单独 samba4 方案）
