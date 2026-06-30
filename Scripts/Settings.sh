@@ -52,8 +52,4 @@ if [[ "${WRT_TARGET^^}" == *"QUALCOMMAX"* ]]; then
 		echo "qualcommax set up nowifi successfully!"
 	fi
 	echo "CONFIG_PACKAGE_kmod-usb-serial-qualcomm=y" >> ./.config
-	# opkg 模式下修复 kmod-nf-ipt 与 kmod-iptables 文件冲突
-	# APK 模式下此两行被包管理器忽略，无任何副作用
-	echo "CONFIG_PACKAGE_kmod-ipt-nat=n" >> ./.config
-	echo "CONFIG_PACKAGE_kmod-nf-ipt=n" >> ./.config
 fi
