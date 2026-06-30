@@ -98,10 +98,13 @@ UPDATE_PACKAGE() {
 
 UPDATE_PACKAGE "openlist2" "sbwml/luci-app-openlist2" "main"
 if [ ! -d "luci-app-openlist2" ] && [ ! -d "openlist2" ]; then
-    echo "ERROR: luci-app-openlist2 clone failed!" && exit 1
+    echo "WARNING: luci-app-openlist2 clone failed, skip!"
 fi
 
 UPDATE_PACKAGE "viking" "VIKINGYFY/packages" "main" "" "luci-app-timewol luci-app-wolplus"
+if [ ! -d "viking" ]; then
+    echo "WARNING: viking clone failed, skip!"
+fi
 
 rm -rf ../feeds/luci/applications/luci-app-passwall
 rm -rf ../feeds/luci/applications/luci-app-passwall2
