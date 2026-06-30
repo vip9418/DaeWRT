@@ -14,7 +14,13 @@ grep -q "kenzok8/small" feeds.conf.default || \
 grep -q "kenzok8/openwrt-daede" feeds.conf.default || \
     sed -i '3i src-git daede https://github.com/kenzok8/openwrt-daede' feeds.conf.default
 
-echo "kenzok8 feeds registered!"
+grep -q "linkease/nas-packages.git" feeds.conf.default || \
+    sed -i '4i src-git nas https://github.com/linkease/nas-packages.git;master' feeds.conf.default
+
+grep -q "linkease/nas-packages-luci" feeds.conf.default || \
+    sed -i '5i src-git nas_luci https://github.com/linkease/nas-packages-luci.git;main' feeds.conf.default
+
+echo "all feeds registered!"
 
 rm -rf feeds/packages/lang/golang
 git clone --depth=1 --single-branch -b 1.26 \
@@ -22,8 +28,8 @@ git clone --depth=1 --single-branch -b 1.26 \
     feeds/packages/lang/golang
 echo "golang replaced!"
 
-./scripts/feeds update kenzo small daede
-echo "kenzok8 feeds update done!"
+./scripts/feeds update kenzo small daede nas nas_luci
+echo "feeds update done!"
 
 rm -rf feeds/small/{base-files,dnsmasq,firewall*,fullconenat,libnftnl,nftables,ppp,opkg,ucl,upx,vsftpd*,miniupnpd-iptables,wireless-regdb}
 rm -rf feeds/kenzo/{base-files,dnsmasq,firewall*,fullconenat,libnftnl,nftables,ppp,opkg,ucl,upx,vsftpd*,miniupnpd-iptables,wireless-regdb}
@@ -49,7 +55,7 @@ for DOCKER_PKG in feeds/kenzo/luci-app-dockerman feeds/kenzo/luci-lib-docker; do
 done
 
 ./scripts/feeds install -a -f
-echo "kenzok8 feeds install done!"
+echo "feeds install done!"
 
 cd $PKG_PATH
 
@@ -95,11 +101,6 @@ if [ ! -d "luci-app-openlist2" ] && [ ! -d "openlist2" ]; then
     echo "ERROR: luci-app-openlist2 clone failed!" && exit 1
 fi
 
-UPDATE_PACKAGE "luci-app-unishare" "linkease/luci-app-unishare" "main"
-if [ ! -d "luci-app-unishare" ]; then
-    echo "ERROR: luci-app-unishare clone failed!" && exit 1
-fi
-
 UPDATE_PACKAGE "viking" "VIKINGYFY/packages" "main" "" "luci-app-timewol luci-app-wolplus"
 
 rm -rf ../feeds/luci/applications/luci-app-passwall
@@ -115,7 +116,6 @@ cp -r $GITHUB_WORKSPACE/package/* ./
 rm -rf ./dae
 rm -rf ./luci-app-dae
 echo "QiuSimons dae/luci-app-dae removed from build dir!"
-echo "kenzok8/daede feed provides dae + daed + luci-app-daede!"
 echo "v2ray-geodata kept!"
 
 echo "========================================"
