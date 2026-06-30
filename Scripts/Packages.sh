@@ -22,14 +22,8 @@ grep -q "linkease/nas-packages-luci" feeds.conf.default || \
 
 echo "all feeds registered!"
 
-# rm -rf feeds/packages/lang/golang
-# git clone --depth=1 --single-branch -b 1.26 \
-#    https://github.com/kenzok8/golang \
-#    feeds/packages/lang/golang
-# echo "golang replaced!"
-
-./scripts/feeds update kenzo small daede nas nas_luci
-echo "feeds update done!"
+./scripts/feeds update -a
+echo "all feeds update done!"
 
 rm -rf feeds/small/{base-files,dnsmasq,firewall*,fullconenat,libnftnl,nftables,ppp,opkg,ucl,upx,vsftpd*,miniupnpd-iptables,wireless-regdb}
 rm -rf feeds/kenzo/{base-files,dnsmasq,firewall*,fullconenat,libnftnl,nftables,ppp,opkg,ucl,upx,vsftpd*,miniupnpd-iptables,wireless-regdb}
