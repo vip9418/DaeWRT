@@ -42,3 +42,25 @@ if [ -f "$DM_FILE" ]; then
 
 	cd $PKG_PATH && echo "diskman has been fixed!"
 fi
+
+#预置 opkg 自定义软件源（写入 files/ overlay，随固件打包）
+#
+# 源分工说明：
+#   Kiddin9源(dl.openwrt.ai/25.12) → .ipk格式，25.12体系，版本完全匹配
+#   kenzok8源(down.dllkids.xyz/24.10) → .ipk格式，补充科学插件（daed/clashoo等）
+#
+# 模式说明：
+#   CONFIG_USE_APK=n（opkg模式）→ 此文件生效，opkg update 自动读取
+#   CONFIG_USE_APK=y（APK模式） → 此文件存在于rootfs但不被apk读取，无副作用
+OPKG_FEEDS_DIR="$GITHUB_WORKSPACE/$WRT_DIR/files/etc/opkg"
+mkdir -p $OPKG_FEEDS_DIR
+cat > $OPKG_FEEDS_DIR/customfeeds.conf << 'EOF'
+src/gz kwrt_base     https://dl.openwrt.ai/releases/25.12/packages/aarch64_cortex-a53/base
+src/gz kwrt_packages https://dl.openwrt.ai/releases/25.12/packages/aarch64_cortex-a53/packages
+src/gz kwrt_luci     https://dl.openwrt.ai/releases/25.12/packages/aarch64_cortex-a53/luci
+src/gz kwrt_routing  https://dl.openwrt.ai/releases/25.12/packages/aarch64_cortex-a53/routing
+src/gz kwrt_video    https://dl.openwrt.ai/releases/25.12/packages/aarch64_cortex-a53/video
+src/gz kwrt_kiddin9  https://dl.openwrt.ai/releases/25.12/packages/aarch64_cortex-a53/kiddin9
+src/gz kenzo         https://down.dllkids.xyz/openwrt-feed/24.10/aarch64_cortex-a53
+EOF
+echo "opkg customfeeds.conf has been preset!"
