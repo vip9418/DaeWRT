@@ -3,14 +3,12 @@
 PKG_PATH="$GITHUB_WORKSPACE/$WRT_DIR/package/"
 
 #修改argon主题字体和颜色
-if [ -d *"luci-theme-argon"* ]; then
-	echo " "
-
-	cd ./luci-theme-argon/
-
-	sed -i "s/primary '.*'/primary '#31a1a1'/; s/'0.2'/'0.5'/; s/'none'/'bing'/; s/'600'/'normal'/" ./luci-app-argon-config/root/etc/config/argon
-
-	cd $PKG_PATH && echo "theme-argon has been fixed!"
+ARGON_DIR=$(find $PKG_PATH -maxdepth 3 -type d -name "luci-theme-argon" 2>/dev/null | head -1)
+if [ -n "$ARGON_DIR" ]; then
+    cd $ARGON_DIR
+    sed -i "s/primary '.*'/primary '#31a1a1'/; s/'0.2'/'0.5'/; s/'none'/'bing'/; s/'600'/'normal'/" \
+        ./luci-app-argon-config/root/etc/config/argon
+    cd $PKG_PATH && echo "theme-argon has been fixed!"
 fi
 
 #修复TailScale配置文件冲突
