@@ -87,6 +87,18 @@ function remove_wifi() {
   sed -i -E ":again; s/(^|[[:space:]])-?(${wifi_pkg_pattern})([[:space:]]|$)/ /g; t again; s/[[:space:]]+$//" ./target/linux/qualcommax/${target}/target.mk
   sed -i -E ":again; s/(^|[[:space:]])-?(${wifi_pkg_pattern})([[:space:]]|$)/ /g; t again; s/[[:space:]]+$//" ./target/linux/qualcommax/image/${target}.mk
   sed -i 's/\bkmod-qca-nss-drv-wifi-meshmgr\b//g' ./target/linux/qualcommax/Makefile
+  find "./target/linux/qualcommax/dts/" -type f ! -iname '*nowifi*' | while read -r f; do
+      for chip in 6018 8074; do
+          nowifi_file="$(dirname "$f")/ipq${chip}-nowifi.dtsi"
+          if [ -f "$nowifi_file" ]; then
+              sed -i "s/ipq${chip}\.dtsi/ipq${chip}-nowifi.dtsi/g" "$f"
+              echo "patched: $(basename $f) → ipq${chip}-nowifi.dtsi ✅"
+          else
+              echo "SKIP: $(basename $f) → ipq${chip}-nowifi.dtsi not found"
+          fi
+      done
+  done
+
   rm -rf package/network/services/hostapd
   rm -rf package/firmware/ipq-wifi
 }
