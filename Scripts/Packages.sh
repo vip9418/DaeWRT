@@ -20,7 +20,7 @@ rm -rf feeds/packages/lang/golang
 git clone --depth=1 --single-branch -b 1.26 \
     https://github.com/kenzok8/golang \
     feeds/packages/lang/golang
-echo "golang replaced with kenzok8/golang 1.26!"
+echo "golang replaced!"
 
 ./scripts/feeds update kenzo small daede
 echo "kenzok8 feeds update done!"
@@ -47,6 +47,9 @@ for DOCKER_PKG in feeds/kenzo/luci-app-dockerman feeds/kenzo/luci-lib-docker; do
         echo "WARNING: $DOCKER_PKG/Makefile not found, skip version fix"
     fi
 done
+
+./scripts/feeds install -a -f
+echo "kenzok8 feeds install done!"
 
 cd $PKG_PATH
 
@@ -87,21 +90,34 @@ UPDATE_PACKAGE() {
     fi
 }
 
-
 UPDATE_PACKAGE "openlist2" "sbwml/luci-app-openlist2" "main"
+if [ ! -d "luci-app-openlist2" ] && [ ! -d "openlist2" ]; then
+    echo "ERROR: luci-app-openlist2 clone failed!" && exit 1
+fi
+
+UPDATE_PACKAGE "luci-app-unishare" "linkease/luci-app-unishare" "main"
+if [ ! -d "luci-app-unishare" ]; then
+    echo "ERROR: luci-app-unishare clone failed!" && exit 1
+fi
+
 UPDATE_PACKAGE "viking" "VIKINGYFY/packages" "main" "" "luci-app-timewol luci-app-wolplus"
 
-rm -rf ../feeds/luci/applications/luci-app-{passwall*,mosdns,dae*,bypass*}
-rm -rf ../feeds/packages/net/{v2ray-geodata,dae*}
+rm -rf ../feeds/luci/applications/luci-app-passwall
+rm -rf ../feeds/luci/applications/luci-app-passwall2
+rm -rf ../feeds/luci/applications/luci-app-mosdns
+rm -rf ../feeds/luci/applications/luci-app-bypass
+rm -rf ../feeds/luci/applications/luci-app-bypass2
+rm -rf ../feeds/packages/net/{v2ray-geodata,dae,daed}
 echo "immortalwrt feeds residual packages removed!"
 
 cp -r $GITHUB_WORKSPACE/package/* ./
+
 rm -rf ./dae
 rm -rf ./luci-app-dae
 echo "QiuSimons dae/luci-app-dae removed from build dir!"
 echo "kenzok8/daede feed provides dae + daed + luci-app-daede!"
-echo "v2ray-geodata kept for v2ray-geodata-updater!"
+echo "v2ray-geodata kept!"
 
 echo "========================================"
-echo "Packages.sh completed successfully!"
+echo "Packages.sh completed!"
 echo "========================================"
